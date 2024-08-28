@@ -13,7 +13,10 @@ import com.cydeo.util.MapperUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -213,15 +216,17 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private void completeRelatedTasks(String projectCode) {
-
-        //TODO Send a request to task-service to complete all the tasks of a certain project
-
+        ResponseEntity<TaskResponse> taskResponse = taskClient.completeByProject(projectCode);
+        if (!Objects.requireNonNull(taskResponse.getBody()).isSuccess()) {
+            throw new TasksCanNotBeCompletedException("Tasks of a project " + projectCode + ", can not be completed");
+        }
     }
 
     private void deleteRelatedTasks(String projectCode) {
-
-        //TODO Send a request to task-service to delete all the tasks of a certain project
-
+        ResponseEntity<TaskResponse> taskResponse = taskClient.deleteByProject(projectCode);
+        if (!Objects.requireNonNull(taskResponse.getBody()).isSuccess()) {
+            throw new TasksCanNotBeDeletedException("Tasks of a project " + projectCode + ", can not be deleted");
+        }
     }
 
 }
