@@ -10,13 +10,11 @@ import com.cydeo.repository.ProjectRepository;
 import com.cydeo.service.KeycloakService;
 import com.cydeo.service.ProjectService;
 import com.cydeo.util.MapperUtil;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -81,6 +79,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @CircuitBreaker(name = "task-service", fallbackMethod = "readAllProjectsWithDetailsFallback")
     public List<ProjectDTO> readAllProjectsWithDetails() {
 
         String loggedInUserUsername = keycloakService.getUsername();
@@ -89,6 +88,22 @@ public class ProjectServiceImpl implements ProjectService {
         return foundProjects.stream()
                 .map(this::retrieveProjectDetails).collect(Collectors.toList());
 
+    }
+
+    List<ProjectDTO> readAllProjectsWithDetailsFallback(Throwable throwable) {
+        return Collections.singletonList(
+                ProjectDTO.builder()
+                        .nonCompletedTaskCount(0)
+                        .completedTaskCount(0)
+                        .projectDetail("")
+                        .projectName("")
+                        .assignedManager("")
+                        .endDate(null)
+                        .startDate(null)
+                        .projectStatus(null)
+                        .id(null)
+                        .build()
+        );
     }
 
     @Override
